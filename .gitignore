@@ -1,0 +1,14 @@
+*.o
+*.txt
+*~
+*.make
+*.marks
+*.yaml
+*.cmake
+*.user
+*.png
+build/
+bin/
+cmake_modules/
+Thirdparty/
+

@@ -28,7 +28,11 @@
 
 #include<System.h>
 
+#define SKIP_IMAGES         0
+#define SKIP_INIT_IMAGES    0
+
 using namespace std;
+using namespace cv;
 
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
@@ -41,39 +45,64 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Retrieve paths to images
-    vector<string> vstrImageFilenames;
-    vector<double> vTimestamps;
-    string strFile = string(argv[3])+"/rgb.txt";
-    LoadImages(strFile, vstrImageFilenames, vTimestamps);
+//    cv::VideoCapture cap1("/home/localuser/data/slam/panasonic-s11-changeConditions.MP4");
+//    cv::VideoCapture cap1("/media/localuser/Default/workspace/data/seqSlam_test_data/s11-guiabot/left/stereo-left.avi");
+//    cv::VideoCapture cap1("/home/localuser/data/vi-sensor/images/frame%04d.jpg");
+    //    cv::VideoCapture cap1("/home/localuser/workspace/generalmgProc/bin/panasonic-testStepChange-darkToBright.avi");
+    cv::VideoCapture cap1("/home/localuser/data/slam/sony/71-last.mkv");
+//    cv::VideoCapture cap1("/media/localuser/My Passport/mm_datasets/00071.MTS");
+//    cv::VideoCapture cap1("/media/localuser/My Passport/slamDatasets/sony/71-last.mkv");
+//    cv::VideoCapture cap1("/home/localuser/data/slam/panasonic/panasonic-s11-changeConditions-firstTwoLaps.mkv");
+//    cv::VideoCapture cap1("/media/localuser/My Passport/slamDatasets/panasonic/s11-testSeqSLAM-LC-pose/4.MP4");
 
-    int nImages = vstrImageFilenames.size();
+    if(!cap1.isOpened())
+    {
+        cerr << "Video not found" << endl;
+        exit(-1);
+    }
+    // Retrieve paths to images
+//    vector<string> vstrImageFilenames;
+//    vector<double> vTimestamps;
+//    string strFile = string(argv[3])+"/rgb.txt";
+//    LoadImages(strFile, vstrImageFilenames, vTimestamps);
+
+    int nImages = cap1.get(CV_CAP_PROP_FRAME_COUNT);//vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
-    vTimesTrack.resize(nImages);
 
     cout << endl << "-------" << endl;
     cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl << endl;
+    cout << "Skipping images: " << SKIP_IMAGES << endl;
+    cout << "Total images in the sequence: " << nImages << endl << endl;
 
     // Main loop
     cv::Mat im;
-    for(int ni=0; ni<nImages; ni++)
+    for(int ni=0;; ni++)
     {
+        while(ni<SKIP_INIT_IMAGES)
+        {
+            cap1.grab();
+            ni++;
+        }
+
         // Read image from file
-        im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
-        double tframe = vTimestamps[ni];
+//        im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
+        double tframe = ni;//vTimestamps[ni];
+        cap1 >> im;
+
 
         if(im.empty())
         {
-            cerr << endl << "Failed to load image at: "
-                 << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
-            return 1;
+            cerr << endl << "Failed to load image " << endl;
+//                 << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
+            break;
         }
+        cv::resize(im,im,cv::Size(im.cols/2,im.rows/2));
+//        im.rowRange(0,im.rows/2).copyTo(im);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -92,22 +121,28 @@ int main(int argc, char **argv)
 
         double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 
-        vTimesTrack[ni]=ttrack;
+        vTimesTrack.push_back(ttrack);
 
         // Wait to load the next frame
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimestamps[ni+1]-tframe;
-        else if(ni>0)
-            T = tframe-vTimestamps[ni-1];
+//        double T=0;
+//        if(ni<nImages-1)
+//            T = ni+1-tframe;
+//        else if(ni>0)
+//            T = tframe-ni-1;
 
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+//        if(ttrack<T)
+//            usleep((T-ttrack)*1e6);
+
+        for(int i1=0; i1<SKIP_IMAGES; i1++)
+        {
+            cap1.grab();
+            ni++;
+        }
     }
 
     // Stop all threads
     SLAM.Shutdown();
-
+    nImages = vTimesTrack.size();
     // Tracking time statistics
     sort(vTimesTrack.begin(),vTimesTrack.end());
     float totaltime = 0;
@@ -120,7 +155,7 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    SLAM.SaveTrajectoryTUM("KeyFrameTrajectory.txt");
 
     return 0;
 }

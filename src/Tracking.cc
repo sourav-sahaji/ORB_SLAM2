@@ -317,7 +317,7 @@ void Tracking::Track()
             }
             else
             {
-                bOK = Relocalization();
+                bOK = false;//Relocalization();
             }
         }
         else
@@ -1205,13 +1205,18 @@ void Tracking::SearchLocalPoints()
     }
 }
 
+//ofstream kfListFile("kfListLocalMap.txt");
 void Tracking::UpdateLocalMap()
 {
     // This is for visualization
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
     // Update
+//    kfListFile << mCurrentFrame.mTimeStamp << " ";
     UpdateLocalKeyFrames();
+//    for(int i1=0; i1<mvpLocalKeyFrames.size(); i1++)
+//        kfListFile << mvpLocalKeyFrames[i1]->mTimeStamp << " ";
+//    kfListFile << endl;
     UpdateLocalPoints();
 }
 
@@ -1528,9 +1533,9 @@ void Tracking::Reset()
     cout << " done" << endl;
 
     // Reset Loop Closing
-    cout << "Reseting Loop Closing...";
-    mpLoopClosing->RequestReset();
-    cout << " done" << endl;
+//    cout << "Reseting Loop Closing...";
+//    mpLoopClosing->RequestReset();
+//    cout << " done" << endl;
 
     // Clear BoW Database
     cout << "Reseting Database...";
