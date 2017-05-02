@@ -105,16 +105,16 @@ target_link_libraries(mono_tum ${PROJECT_NAME})
 #Examples/Monocular/mono_kitti.cc)
 #target_link_libraries(mono_kitti ${PROJECT_NAME})
 
-add_executable(mono_euroc
-Examples/Monocular/mono_euroc.cc)
-target_link_libraries(mono_euroc ${PROJECT_NAME})
+#add_executable(mono_euroc
+#Examples/Monocular/mono_euroc.cc)
+#target_link_libraries(mono_euroc ${PROJECT_NAME})
 
-#add_executable(mono_test
-#Examples/Monocular/mono_test.cc)
-#target_link_libraries(mono_test ${PROJECT_NAME})
+add_executable(mono_test
+Examples/Monocular/mono_test.cc)
+target_link_libraries(mono_test ${PROJECT_NAME})
 
-find_package(RapidJSON)
-include_directories(${RapidJSON_INCLUDE_DIR})
+#find_package(RapidJSON)
+#include_directories(${RapidJSON_INCLUDE_DIR})
 
-add_executable(readGT src/readGT.cpp)
-target_link_libraries(readGT ${OpenCV_LIBS})
+#add_executable(readGT src/readGT.cpp)
+#target_link_libraries(readGT ${OpenCV_LIBS})

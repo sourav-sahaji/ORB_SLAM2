@@ -310,7 +310,7 @@ void System::Shutdown()
     }
 
     // Wait until all thread have effectively stopped
-    while(!mpLocalMapper->isFinished() /*|| !mpLoopCloser->isFinished() */ ||
+    while(!mpLocalMapper->isFinished() )///*|| !mpLoopCloser->isFinished() */ ||
     {
         usleep(5000);
     }

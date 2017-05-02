@@ -33,7 +33,8 @@ using namespace cv;
 
 int main(int argc, char **argv)
 {
-    VideoCapture cap1("/home/localuser/data/panasonic-checkeredBox/P1010397.MP4");
+    VideoCapture cap1("/home/sourav/dataset/slamData/footpath-speedVary-3/day.mp4");
+//    VideoCapture cap1("/home/sourav/dataset/slamData/surfers-paradise/day.avi");
     if(!cap1.isOpened())
     {
         cerr << "Video not found" << endl;
@@ -42,8 +43,9 @@ int main(int argc, char **argv)
 
     int nImages = cap1.get(CV_CAP_PROP_FRAME_COUNT);
 
-    string vocFile = "/home/localuser/workspace/ORB_SLAM2/Vocabulary/ORBvoc.txt";
-    string settingFile = "/home/localuser/workspace/ORB_SLAM2/Examples/Monocular/panasonic-ros-half.yaml";
+    string vocFile = "/home/sourav/workspace/ORB_SLAM2/Vocabulary/ORBvoc.txt";
+    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/motom.yaml";
+//    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/surfers-paradise-fake.yaml";
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(vocFile,settingFile,ORB_SLAM2::System::MONOCULAR,true);
@@ -59,10 +61,15 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
+//    int counter = 0;
+//    while(counter++<12600)
+//        cap1>>im;
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image from file
         cap1 >> im;
+
+//        cv::resize(im,im,cv::Size(512,288));
         double tframe = ni;
 
         if(im.empty())
