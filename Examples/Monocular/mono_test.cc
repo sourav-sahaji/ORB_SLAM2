@@ -33,8 +33,8 @@ using namespace cv;
 
 int main(int argc, char **argv)
 {
-    VideoCapture cap1("/home/sourav/dataset/slamData/footpath-speedVary-3/day.mp4");
-//    VideoCapture cap1("/home/sourav/dataset/slamData/surfers-paradise/day.avi");
+//    VideoCapture cap1("/home/sourav/dataset/slamData/footpath-speedVary-3/night-2.mp4");
+    VideoCapture cap1("/home/sourav/dataset/slamData/MLRSCD/Highway/NIR.avi");
     if(!cap1.isOpened())
     {
         cerr << "Video not found" << endl;
@@ -44,8 +44,8 @@ int main(int argc, char **argv)
     int nImages = cap1.get(CV_CAP_PROP_FRAME_COUNT);
 
     string vocFile = "/home/sourav/workspace/ORB_SLAM2/Vocabulary/ORBvoc.txt";
-    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/motom.yaml";
-//    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/surfers-paradise-fake.yaml";
+//    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/motom.yaml";
+    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/mlrscd.yaml";
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(vocFile,settingFile,ORB_SLAM2::System::MONOCULAR,true);
@@ -60,10 +60,15 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+    int resetCounter = 0;
+    int maxImages = 999999999;
+
     cv::Mat im;
 //    int counter = 0;
-//    while(counter++<12600)
+//    while(counter++<4500)
 //        cap1>>im;
+//    maxImages = 12000-4500;
+
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image from file
@@ -71,6 +76,13 @@ int main(int argc, char **argv)
 
 //        cv::resize(im,im,cv::Size(512,288));
         double tframe = ni;
+
+        if(ni>maxImages)
+        {
+            cerr << "Max limit on images set to " << maxImages << endl;
+            cerr << "Stopping the system" << endl;
+            break;
+        }
 
         if(im.empty())
         {
@@ -86,6 +98,16 @@ int main(int argc, char **argv)
 
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im,tframe);
+
+        if(SLAM.GetTrackingState() == 3 && SLAM.GetNumKFs() >= 5)
+        {
+            std::cout << "Current Tracking State - LOST, Hence resetting the system after saving the trajectory..." << std::endl;
+            stringstream kfTrajFileName;
+            kfTrajFileName << "kfTrajFile-2-" << resetCounter << ".txt";
+            SLAM.SaveKeyFrameTrajectoryTUM(kfTrajFileName.str());
+            SLAM.Reset();
+            resetCounter++;
+        }
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -123,7 +145,7 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory-2.txt");
 
     return 0;
 }
