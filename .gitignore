@@ -24,7 +24,7 @@ build/
 *~
 *.make
 *.marks
-*.yaml
+#*.yaml
 *.cmake
 *.user
 *.png
@@ -33,4 +33,3 @@ bin/
 lib/
 cmake_modules/
 Thirdparty/
-

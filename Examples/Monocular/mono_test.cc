@@ -31,10 +31,47 @@
 using namespace std;
 using namespace cv;
 
+void rectifyImage(cv::Mat& inImg,string &strSettingPath)
+{
+    cv::Mat mK, mDistCoef, outImg;
+
+    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
+    float fx = fSettings["Camera.fx"];
+    float fy = fSettings["Camera.fy"];
+    float cx = fSettings["Camera.cx"];
+    float cy = fSettings["Camera.cy"];
+
+    cv::Mat K = cv::Mat::eye(3,3,CV_32F);
+    K.at<float>(0,0) = fx;
+    K.at<float>(1,1) = fy;
+    K.at<float>(0,2) = cx;
+    K.at<float>(1,2) = cy;
+    K.copyTo(mK);
+
+    cv::Mat DistCoef(4,1,CV_32F);
+    DistCoef.at<float>(0) = fSettings["Camera.k1"];
+    DistCoef.at<float>(1) = fSettings["Camera.k2"];
+    DistCoef.at<float>(2) = fSettings["Camera.p1"];
+    DistCoef.at<float>(3) = fSettings["Camera.p2"];
+    const float k3 = fSettings["Camera.k3"];
+    if(k3!=0)
+    {
+        DistCoef.resize(5);
+        DistCoef.at<float>(4) = k3;
+    }
+    DistCoef.copyTo(mDistCoef);
+
+    cv::undistort(inImg,outImg,mK,mDistCoef);
+
+    outImg.copyTo(inImg);
+}
+
 int main(int argc, char **argv)
 {
-//    VideoCapture cap1("/home/sourav/dataset/slamData/footpath-speedVary-3/night-2.mp4");
-    VideoCapture cap1("/home/sourav/dataset/slamData/MLRSCD/Highway/NIR.avi");
+//    VideoCapture cap1("/media/sourav/Default4/Users/n9349995/Desktop/dataset/slamData/footpath-speedVary-3/night-2.mp4");
+//    VideoCapture cap1("/media/sourav/My Passport3/current/data/MLRSCD/Highway/NIR.avi");
+    VideoCapture cap1("/media/sourav/Default4/Users/n9349995/Desktop/dataset/slamData/parking_amrapali/round-3.mov");
+//    VideoCapture cap1("/media/sourav/Default4/Users/n9349995/Desktop/dataset/slamData/home-indoor-outdoor/dayLeft.mp4");
     if(!cap1.isOpened())
     {
         cerr << "Video not found" << endl;
@@ -45,7 +82,8 @@ int main(int argc, char **argv)
 
     string vocFile = "/home/sourav/workspace/ORB_SLAM2/Vocabulary/ORBvoc.txt";
 //    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/motom.yaml";
-    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/mlrscd.yaml";
+//    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/mlrscd.yaml";
+    string settingFile = "/home/sourav/workspace/ORB_SLAM2/Examples/Monocular/iphone.yaml";
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(vocFile,settingFile,ORB_SLAM2::System::MONOCULAR,true);
@@ -64,10 +102,10 @@ int main(int argc, char **argv)
     int maxImages = 999999999;
 
     cv::Mat im;
-//    int counter = 0;
-//    while(counter++<4500)
-//        cap1>>im;
-//    maxImages = 12000-4500;
+    int counter = 0;
+    while(counter++<4400)
+        cap1>>im;
+//    maxImages = 4800;
 
     for(int ni=0; ni<nImages; ni++)
     {
@@ -95,6 +133,9 @@ int main(int argc, char **argv)
 #else
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
+
+//        rectifyImage(im,settingFile);
+        cv::resize(im,im,cv::Size(512,288));
 
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im,tframe);
